@@ -17,6 +17,10 @@ app.use(cors({
 app.use(express.json());
 app.use("/api/v1", mainRouter);
 
+//for testing backend...
+app.get("/test",(req,res)=>{
+    res.send("Hello World");
+});
 
 const connectDB = async ()=>{
     try {
