@@ -14,8 +14,45 @@ const app = express();
 app.use(cors({
     origin: process.env.ORIGIN
 }));
+
 app.use(express.json());
-app.use("/api/v1", mainRouter);
+
+// Store SSE clients
+const clients = new Map();
+
+// SSE endpoint
+app.get('/api/v1/balance-updates', (req, res) => {
+    const headers = {
+        'Content-Type': 'text/event-stream',
+        'Connection': 'keep-alive',
+        'Cache-Control': 'no-cache'
+    };
+    res.writeHead(200, headers);
+
+    const clientId = Date.now();
+    const newClient = {
+        id: clientId,
+        res
+    };
+    clients.set(clientId, newClient);
+
+    req.on('close', () => {
+        clients.delete(clientId);
+    });
+});
+
+// Function to send SSE updates
+function sendSSEUpdate(userId, balance) {
+    clients.forEach(client => {
+        client.res.write(`data: ${JSON.stringify({ userId, balance })}\n\n`);
+    });
+}
+
+// Add sendSSEUpdate to app for use in routes
+app.set('sendSSEUpdate', sendSSEUpdate);
+
+
+app.use("/api/v1",mainRouter);
 
 //for testing backend...
 app.get("/test",(req,res)=>{

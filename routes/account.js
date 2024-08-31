@@ -63,12 +63,6 @@ router.post("/transfer", authMiddleware, async (req,res)=>{
     await Account.updateOne({userId: reciever}, {$inc: {balance: amount}}).session(session); //for reciever
 
 
-    // const transaction = await Transaction.create({
-    //     from: req.userId,
-    //     to: to,
-    //     amount 
-    // })
-
     const transaction = await Transaction.create({
         from: req.userId,
         to: to,
@@ -77,6 +71,17 @@ router.post("/transfer", authMiddleware, async (req,res)=>{
     
     //commit the transaction...
     await session.commitTransaction();
+
+    // Fetch updated balances
+    const updatedSenderAccount = await Account.findOne({ userId: req.userId });
+    const updatedReceiverAccount = await Account.findOne({ userId: reciever });
+
+    // Send SSE updates
+    const sendSSEUpdate = req.app.get('sendSSEUpdate');
+    sendSSEUpdate(req.userId, updatedSenderAccount.balance);
+    sendSSEUpdate(reciever, updatedReceiverAccount.balance);
+
+
     return res.status(200).json({
         message: "Transfer Successfull.."
     })
