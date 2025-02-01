@@ -3,6 +3,7 @@ const cors = require("cors");
 const mainRouter = require("./routes/routes");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
+const {connectToDataBase} = require("./db");
 
 dotenv.config();
 
@@ -59,16 +60,8 @@ app.get("/test",(req,res)=>{
     res.send("Hello World");
 });
 
-const connectDB = async ()=>{
-    try {
-        mongoose.connect(process.env.DBURL);
-        console.log("Database is connected..");
-    } catch (error) {
-        console.log("Error From the Server connect DataBase..", error);
-        process.exit(1);
-    }
-}
-connectDB().then(()=>{
+console.log("URL: ",process.env.DBURL);
+connectToDataBase().then(()=>{
     app.listen(port,()=>{
         console.log(`The Server is running at http://${hostname}:${port}`);
     })
