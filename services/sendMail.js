@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+require('dotenv').config();
 
 const config = {
   service: process.env.SERVICES,
@@ -10,7 +11,7 @@ const config = {
 
 const transporter = nodemailer.createTransport(config);
 
-const sendMail = async (to,from,subject, body) => {
+const sendMail = async (to, from, subject, body) => {
   await transporter.sendMail({
     from: from, // sender address
     to: to, // list of receivers

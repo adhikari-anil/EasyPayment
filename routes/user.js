@@ -9,6 +9,8 @@ const sendMail = require("../services/sendMail");
 const Mailgen = require("mailgen");
 
 const EMAIL = process.env.EMAIL;
+let otpStorage = {};
+let verifyMail;
 
 // Zod validation...
 const signupSchema = zod.object({
@@ -180,7 +182,6 @@ router.get("/me", authMiddleware, async (req, res) => {
   }
 });
 
-
 // Sending mail from real account...
 router.post("/forgetPassword", async (req, res) => {
   const email = req.body.username;
@@ -190,6 +191,10 @@ router.post("/forgetPassword", async (req, res) => {
       message: "User not found",
     });
   }
+
+  const otp = Math.floor(100000 + Math.random() * 900000);
+  verifyMail=email;
+  otpStorage[verifyMail] = otp;
 
   //const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
   // Integrating email sending process to send token with link..
@@ -201,34 +206,33 @@ router.post("/forgetPassword", async (req, res) => {
       link: "https://mailgen.js",
     },
   });
-  
   let response = {
     body: {
       name: user.firstname,
-      title: "Generated OTP is : ",
+      title: `Generated OTP is : ${otpStorage[email]}`,
       intro: "You have received an OTP code",
       outro:
         "If you did not request a password reset, no further action is required on your part.",
     },
   };
-  
+
   let mail = MailGenerator.generate(response);
 
-  await sendMail(email,EMAIL,"Recieving OTP",mail);
+  await sendMail(email, EMAIL, "Recieving OTP", mail);
   res.json({
-    message: "Email Sent"
-  })
+    message: "Email Sent",
+  });
 });
 
 router.post("/verify-otp", async (req, res) => {
   try {
-    const email = req.body.email;
     const otprecived = req.body.otp;
     const otp = parseInt(otprecived, 10);
-    console.log(otp);  
-    console.log(otpStorage[email]); 
-    if (otpStorage[email] === otp) {
-      delete otpStorage[email]; 
+    console.log(otp);
+    console.log(otpStorage);
+    if (otpStorage[verifyMail] === otp) {
+      delete otpStorage[verifyMail];
+      delete verifyMail; 
       return res.json({
         check: true,
       });

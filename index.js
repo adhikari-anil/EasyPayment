@@ -60,7 +60,6 @@ app.get("/test",(req,res)=>{
     res.send("Hello World");
 });
 
-console.log("URL: ",process.env.DBURL);
 connectToDataBase().then(()=>{
     app.listen(port,()=>{
         console.log(`The Server is running at http://${hostname}:${port}`);
