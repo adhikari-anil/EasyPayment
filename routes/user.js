@@ -46,6 +46,27 @@ router.post("/signup", async (req, res) => {
     password: req.body.password,
   });
 
+  let MailGenerator = new Mailgen({
+    theme: "salted",
+    product: {
+      name: "SignUp Email",
+      link: "https://mailgen.js",
+    },
+  });
+  let response = {
+    body: {
+      name: user.firstname,
+      title: `ThankYou! ${user.firstname}. To become part of our product. May our product be helpfull to you ${user.firstname}.`,
+      intro: "Signup Email Alert !",
+      outro:
+        "If you did not request a password reset, no further action is required on your part.",
+    },
+  };
+
+  let mail = MailGenerator.generate(response);
+
+  await sendMail(req.body.username, EMAIL, "Signup Successfull!", mail);
+
   const userId = user._id;
 
   await Account.create({
@@ -60,8 +81,8 @@ router.post("/signup", async (req, res) => {
     process.env.JWT_SECRET
   );
 
-  res.json({
-    message: "User created successfully",
+  return res.json({
+    message: "User Created. Check your Gmail!",
     userId: userId,
     token: token,
   });
@@ -99,6 +120,7 @@ router.post("/signin", async (req, res) => {
     return res.json({
       message: "SignIn successful",
       token: token,
+      username: user.firstname,
     });
   }
 
@@ -193,7 +215,7 @@ router.post("/forgetPassword", async (req, res) => {
   }
 
   const otp = Math.floor(100000 + Math.random() * 900000);
-  verifyMail=email;
+  verifyMail = email;
   otpStorage[verifyMail] = otp;
 
   //const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
@@ -232,7 +254,7 @@ router.post("/verify-otp", async (req, res) => {
     console.log(otpStorage);
     if (otpStorage[verifyMail] === otp) {
       delete otpStorage[verifyMail];
-      delete verifyMail; 
+      delete verifyMail;
       return res.json({
         check: true,
       });
